@@ -1,0 +1,6 @@
+{
+  "status": "error",
+  "message": "401 Unauthorized - IP 8.8.8.8 tidak diizinkan.",
+  "your_ip": "8.8.8.8",
+  "allowed_ips": ["127.0.0.1"]
+}
