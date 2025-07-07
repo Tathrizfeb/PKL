@@ -1,0 +1,21 @@
+{
+    "name": "ftath/htdocs",
+    "description": "Simple mailer test using PHP",
+    "type": "project",
+    "require": {
+        "phpmailer/phpmailer": "^6.10"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Ftath\\Htdocs\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Tathriz",
+            "email": "Tathriz@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable"
+}
