@@ -15,6 +15,12 @@ if (!in_array($client_ip, $allowed_ips)) {
     exit;
 }
 
+// === Tambahan PHPMailer ===
+require __DIR__ . '/../vendor/autoload.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 // Koneksi ke DB
 try {
     $dsn = 'pgsql:host=' . getenv('DB_HOST') . ';port=' . getenv('DB_PORT') . ';dbname=' . getenv('DB_NAME');
@@ -49,7 +55,6 @@ if (
     isset($data['payload']['status']) &&
     isset($data['payload']['output'])
 ) {
-    // Struktur lama
     $message_id = $data['payload']['message']['message_id'];
     $postal_status = $data['payload']['status'];
     $postal_status_message = $data['payload']['output'];
@@ -57,9 +62,8 @@ if (
     isset($data['ref']) &&
     isset($data['message'])
 ) {
-    // Struktur flat (dari Postman kamu)
     $message_id = $data['ref'];
-    $postal_status = 'success'; // Default
+    $postal_status = 'success';
     $postal_status_message = $data['message'];
 } else {
     http_response_code(400);
@@ -91,6 +95,36 @@ try {
             'message' => 'Data berhasil diperbarui.',
             'updated_message_id' => $message_id
         ]);
+
+        // Kirim email notifikasi jika update berhasil
+        try {
+            $mail = new PHPMailer(true);
+            $mail->isSMTP();
+            $mail->Host       = 'smtp.gmail.com';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = 'yourgmail@gmail.com';          // Ganti
+            $mail->Password   = 'sandi_aplikasi_gmail';         // Ganti
+            $mail->SMTPSecure = 'tls';
+            $mail->Port       = 587;
+
+            $mail->setFrom('yourgmail@gmail.com', 'Webhook Notifier');
+            $mail->addAddress('tujuan@email.com', 'Admin');     // Ganti tujuan email
+
+            $mail->isHTML(true);
+            $mail->Subject = 'Notifikasi Webhook: Data Diperbarui';
+            $mail->Body    = "
+                <h3>Notifikasi Webhook</h3>
+                <p><strong>Message ID:</strong> {$message_id}</p>
+                <p><strong>Status:</strong> {$postal_status}</p>
+                <p><strong>Pesan:</strong> {$postal_status_message}</p>
+            ";
+
+            $mail->send();
+        } catch (Exception $e) {
+            // Log error email jika perlu
+            // file_put_contents('email_error.log', $e->getMessage(), FILE_APPEND);
+        }
+
     } else {
         echo json_encode([
             'status' => 'error',
@@ -98,6 +132,7 @@ try {
             'message_id' => $message_id
         ]);
     }
+
 } catch (PDOException $e) {
     http_response_code(500);
     echo json_encode([
